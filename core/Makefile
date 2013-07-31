@@ -313,6 +313,9 @@ endif
 # exist with the suffixes ".x509.pem" and ".pk8".
 DEFAULT_KEY_CERT_PAIR := $(DEFAULT_SYSTEM_DEV_CERTIFICATE)
 
+ifneq ($(OTA_PACKAGE_SIGNING_KEY),)
+    DEFAULT_KEY_CERT_PAIR := $(OTA_PACKAGE_SIGNING_KEY)
+endif
 
 # Rules that need to be present for the all targets, even
 # if they don't do anything.
@@ -686,6 +689,13 @@ INTERNAL_RECOVERY_FILES := $(filter $(TARGET_RECOVERY_OUT)/%, \
 # build always uses dev-keys for this; release packaging tools will
 # substitute other keys for this one.
 OTA_PUBLIC_KEYS := $(DEFAULT_SYSTEM_DEV_CERTIFICATE).x509.pem
+
+ifneq ($(OTA_PACKAGE_SIGNING_KEY),)
+    OTA_PUBLIC_KEYS := $(OTA_PACKAGE_SIGNING_KEY).x509.pem
+    PRODUCT_EXTRA_RECOVERY_KEYS := $(DEFAULT_SYSTEM_DEV_CERTIFICATE)
+endif
+
+PRODUCT_EXTRA_RECOVERY_KEYS += build/target/product/security/cm
 
 # Generate a file containing the keys that will be read by the
 # recovery binary.
@@ -1320,6 +1330,7 @@ endif
 
 $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	@echo -e ${CL_YLW}"Package OTA:"${CL_RST}" $@"
+	MKBOOTIMG=$(BOARD_CUSTOM_BOOTIMG_MK) \
 	$(OTA_FROM_TARGET_SCRIPT) -v \
 	   -p $(HOST_OUT) \
 	   -k $(KEY_CERT_PAIR) \
@@ -1365,6 +1376,7 @@ endif
 
 $(INTERNAL_UPDATE_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS)
 	@echo -e ${CL_YLW}"Package:"${CL_RST}" $@"
+	MKBOOTIMG=$(BOARD_CUSTOM_BOOTIMG_MK) \
 	$(IMG_FROM_TARGET_SCRIPT) -v \
 	   -s $(extensions) \
 	   -p $(HOST_OUT) \

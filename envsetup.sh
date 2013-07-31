@@ -241,7 +241,7 @@ function settitle()
             PROMPT_COMMAND="echo -ne \"\033]0;${USER}@${HOSTNAME}: ${PWD}\007\";${PROMPT_COMMAND}"
         fi
         if [ ! -z "$ANDROID_PROMPT_PREFIX" ]; then
-            PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed -e 's/$ANDROID_PROMPT_PREFIX //g')
+            PROMPT_COMMAND="$(echo $PROMPT_COMMAND | sed -e 's/$ANDROID_PROMPT_PREFIX //g')"
         fi
 
         if [ -z "$apps" ]; then
@@ -481,9 +481,9 @@ function print_lunch_menu()
     local choice
     for choice in ${LUNCH_MENU_CHOICES[@]}
     do
-        echo "     $i. $choice"
+        echo " $i. $choice "
         i=$(($i+1))
-    done
+    done | column
 
     if [ "z${CM_DEVICES_ONLY}" != "z" ]; then
        echo "... and don't forget the bacon!"
@@ -614,6 +614,8 @@ function lunch()
     export TARGET_BUILD_TYPE=release
 
     echo
+
+    fixup_common_out_dir
 
     set_stuff_for_environment
     printconfig
@@ -1810,8 +1812,9 @@ function dopush()
         # Get target file name (i.e. system/bin/adb)
         TARGET=$(echo $FILE | sed "s#$OUT/##")
 
-        # Don't send files that are not in /system.
-        if ! echo $TARGET | egrep '^system\/' > /dev/null ; then
+        # Don't send files that are not under /system or /data
+        if [ ! "echo $TARGET | egrep '^system\/' > /dev/null" -o \
+               "echo $TARGET | egrep '^data\/' > /dev/null" ] ; then
             continue
         else
             case $TARGET in
@@ -1843,6 +1846,24 @@ alias cmkap='dopush cmka'
 function repopick() {
     T=$(gettop)
     $T/build/tools/repopick.py $@
+}
+
+function fixup_common_out_dir() {
+    common_out_dir=$(get_build_var OUT_DIR)/target/common
+    target_device=$(get_build_var TARGET_DEVICE)
+    if [ ! -z $CM_FIXUP_COMMON_OUT ]; then
+        if [ -d ${common_out_dir} ] && [ ! -L ${common_out_dir} ]; then
+            mv ${common_out_dir} ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        else
+            [ -L ${common_out_dir} ] && rm ${common_out_dir}
+            mkdir -p ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        fi
+    else
+        [ -L ${common_out_dir} ] && rm ${common_out_dir}
+        mkdir -p ${common_out_dir}
+    fi
 }
 
 
