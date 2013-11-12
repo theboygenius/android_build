@@ -1145,8 +1145,10 @@ endif
 # host tools needed to build dist and OTA packages
 
 DISTTOOLS :=  $(HOST_OUT_EXECUTABLES)/minigzip \
+	  $(HOST_OUT_EXECUTABLES)/adb \
 	  $(HOST_OUT_EXECUTABLES)/mkbootfs \
 	  $(HOST_OUT_EXECUTABLES)/mkbootimg \
+	  $(HOST_OUT_EXECUTABLES)/unpackbootimg \
 	  $(HOST_OUT_EXECUTABLES)/fs_config \
 	  $(HOST_OUT_EXECUTABLES)/mkyaffs2image \
 	  $(HOST_OUT_EXECUTABLES)/zipalign \
@@ -1164,6 +1166,11 @@ OTATOOLS := $(DISTTOOLS) \
 
 .PHONY: otatools
 otatools: $(OTATOOLS)
+
+UNPACKBOOTIMG :=  $(HOST_OUT_EXECUTABLES)/unpackbootimg$(HOST_EXECUTABLE_SUFFIX)
+
+.PHONY: unpackbootimg
+unpackbootimg: $(UNPACKBOOTIMG)
 
 # -----------------------------------------------------------------
 # A zip of the directories that map to the target filesystem.
